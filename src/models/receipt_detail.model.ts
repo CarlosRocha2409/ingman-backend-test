@@ -55,6 +55,13 @@ export class ReceiptDetail {
   })
   subtotal!: number;
 
+  @Column({
+    nullable: false,
+    default: 1,
+    enum: [1, 0],
+  })
+  active!: number;
+
   @CreateDateColumn({
     type: "timestamp",
     default: () => "CURRENT_TIMESTAMP(6)",

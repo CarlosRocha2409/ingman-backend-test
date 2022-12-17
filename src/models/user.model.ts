@@ -2,9 +2,11 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from "typeorm";
+import { Receipt } from "./receipt.model";
 
 @Entity()
 export class User {
@@ -25,6 +27,9 @@ export class User {
     enum: [0, 1],
   })
   active!: number;
+
+  @OneToMany(() => Receipt, (receipt) => receipt.user)
+  receipts!: Receipt[];
 
   @CreateDateColumn({
     type: "timestamp",

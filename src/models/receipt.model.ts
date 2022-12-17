@@ -3,6 +3,7 @@ import {
   CreateDateColumn,
   Entity,
   JoinColumn,
+  ManyToOne,
   OneToMany,
   OneToOne,
   PrimaryGeneratedColumn,
@@ -21,7 +22,7 @@ export class Receipt {
   })
   userId!: number;
 
-  @OneToOne(() => User)
+  @ManyToOne(() => User, (user) => user.receipts)
   @JoinColumn({
     name: "userId",
   })
@@ -29,6 +30,13 @@ export class Receipt {
 
   @OneToMany(() => ReceiptDetail, (rd) => rd.receipt)
   details!: ReceiptDetail[];
+
+  @Column({
+    nullable: false,
+    default: 1,
+    enum: [1, 0],
+  })
+  active!: number;
 
   @CreateDateColumn({
     type: "timestamp",
