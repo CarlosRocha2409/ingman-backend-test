@@ -6,6 +6,7 @@ import { Product } from "../models/product.model";
 import { User } from "../models/user.model";
 import { Receipt } from "../models/receipt.model";
 import { ReceiptDetail } from "../models/receipt_detail.model";
+import { fillData } from "./filldata.config";
 // import { Wallet } from "../models/wallet.model";
 // import { Discord } from "../models/discord.model";
 // import { Guild } from "../models/guild.model";
@@ -41,6 +42,7 @@ class DBConfig {
     this.AppDataSource.initialize()
       .then(() => {
         apiLogger.info("Successfully connected to DB");
+        fillData();
       })
       .catch((error) => console.log(error));
   }
