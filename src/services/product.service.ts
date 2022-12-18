@@ -7,6 +7,7 @@ import { BAD_REQUEST, INTERNAL_SERVER } from "../types/error.type";
 import logger from "../logger/api.logger";
 import { PaginationDTO } from "../dtos/pagination.dto";
 import { validateFields } from "../utils/validation.util";
+import { ITEMS_PER_PAGE } from "../config/general.config";
 
 export class ProductService {
   repo: Repository<Product>;
@@ -40,20 +41,11 @@ export class ProductService {
   async findById(id: number) {
     if (!id) throw new ApiError("Please provide a valid Id");
 
-    return this.repo
-      .findOneBy({ id, active: 1 })
-      .then((product) => {
-        if (!product)
-          throw new ApiError(`Product with id ${id} not found`, BAD_REQUEST);
-        return new ProductDTO(product);
-      })
-      .catch((e) => {
-        logger.error(`Error getting product with id ${id}:: ${e} `);
-        throw new ApiError(
-          `Error getting product with id ${id}`,
-          INTERNAL_SERVER
-        );
-      });
+    return this.repo.findOneBy({ id, active: 1 }).then((product) => {
+      if (!product)
+        throw new ApiError(`Product with id ${id} not found`, BAD_REQUEST);
+      return new ProductDTO(product);
+    });
   }
 
   async findByCode(code: string) {
@@ -86,8 +78,8 @@ export class ProductService {
     });
     return this.repo
       .find({
-        skip: page - 1,
-        take: 10,
+        skip: (page - 1) * ITEMS_PER_PAGE,
+        take: ITEMS_PER_PAGE,
         where: {
           active: 1,
         },
@@ -96,13 +88,13 @@ export class ProductService {
         return new PaginationDTO(
           page,
           count,
-          10,
+          ITEMS_PER_PAGE,
           products.map((product) => new ProductDTO(product))
         );
       })
       .catch(() => {
-        logger.error(`Error getting users`);
-        throw new ApiError(`Error getting users`, INTERNAL_SERVER);
+        logger.error(`Error getting products`);
+        throw new ApiError(`Error getting products`, INTERNAL_SERVER);
       });
   }
 
@@ -123,17 +115,18 @@ export class ProductService {
         id: result.identifiers[0],
       }))
       .catch(() => {
-        throw new ApiError(`Error creating user`, BAD_REQUEST);
+        throw new ApiError(`Error creating product`, INTERNAL_SERVER);
       });
   }
 
   async update(product: Product) {
     await this.validateUpdate(product);
+    const { code, ...prod } = product;
     return this.repo
       .update(
-        { code: product.code },
+        { code },
         {
-          ...product,
+          ...prod,
         }
       )
       .then(() => ({ code: product.code }))
@@ -143,6 +136,12 @@ export class ProductService {
           BAD_REQUEST
         );
       });
+  }
+
+  async updateMany(products: Product[]) {
+    for (const product of products) {
+      await this.update(product);
+    }
   }
 
   async delete(code: string) {

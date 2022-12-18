@@ -7,14 +7,19 @@ import { PaginationDTO } from "../dtos/pagination.dto";
 import { Receipt } from "../models/receipt.model";
 import { validateFields } from "../utils/validation.util";
 import { UserService } from "./user.service";
+import { ITEMS_PER_PAGE } from "../config/general.config";
+import { ReceiptDetail } from "../models/receipt_detail.model";
+import { ReceiptDetailService } from "./receipt_detail.service";
 
 export class ReceiptService {
   repo: typeof receiptRepository;
   userService: UserService;
+  detailService: ReceiptDetailService;
 
   constructor() {
     this.repo = receiptRepository;
     this.userService = new UserService();
+    this.detailService = new ReceiptDetailService();
   }
 
   async findById(receiptId: number) {
@@ -24,7 +29,10 @@ export class ReceiptService {
           id: receiptId,
         },
         relations: {
-          details: true,
+          user: true,
+          details: {
+            product: true,
+          },
         },
       })
       .then((receipt) => {
@@ -34,13 +42,6 @@ export class ReceiptService {
             BAD_REQUEST
           );
         return new ReceiptDTO(receipt);
-      })
-      .catch((e) => {
-        logger.error(`Error getting product with id ${receiptId}:: ${e} `);
-        throw new ApiError(
-          `Error getting product with id ${receiptId}`,
-          INTERNAL_SERVER
-        );
       });
   }
 
@@ -52,10 +53,19 @@ export class ReceiptService {
     });
     return this.repo
       .find({
-        skip: page - 1,
-        take: 10,
+        order: {
+          id: "DESC",
+        },
+        skip: (page - 1) * ITEMS_PER_PAGE,
+        take: ITEMS_PER_PAGE,
         where: {
           active: 1,
+        },
+        relations: {
+          user: true,
+          details: {
+            product: true,
+          },
         },
       })
       .then((receipts) => {
@@ -66,7 +76,8 @@ export class ReceiptService {
           receipts.map((receipt) => new ReceiptDTO(receipt))
         );
       })
-      .catch(() => {
+      .catch((e) => {
+        console.log(e);
         logger.error(`Error getting receipts`);
         throw new ApiError(`Error getting receipts`, INTERNAL_SERVER);
       });
@@ -94,6 +105,66 @@ export class ReceiptService {
       .catch((e) => {
         logger.error(`Error inserting receipt ${e}`);
         throw new ApiError(`Error inserting receipt`);
+      });
+  }
+
+  async insertWithDetails({
+    receipt,
+    details,
+  }: {
+    receipt: Receipt;
+    details: ReceiptDetail[];
+  }) {
+    if (!receipt || !details)
+      throw new ApiError(
+        "Please provide the receipt and details fields",
+        BAD_REQUEST
+      );
+    if (!Array.isArray(details)) {
+      throw new ApiError("Please provide a valid list of details", BAD_REQUEST);
+    }
+    const {
+      id: { id },
+    } = await this.insert(receipt);
+    await this.detailService
+      .insertMany(details.map((d) => ({ ...d, receiptId: +id })))
+      .catch(async (e) => {
+        await this.repo.delete({
+          id,
+        });
+        throw e;
+      });
+    return { id };
+  }
+
+  private async validateUpdate(receipt: Receipt) {
+    validateFields({
+      fields: ["id"],
+      item: receipt,
+      action: "updating",
+      itemName: "product",
+    });
+
+    return await this.findById(receipt.id);
+  }
+  async delete(receiptId: number) {
+    const receipt = await this.validateUpdate({
+      id: receiptId,
+    } as Receipt);
+    return this.repo
+      .update({ id: receiptId }, { active: 0 })
+      .then(async () => {
+        const details = receipt.details;
+        console.log(receipt);
+
+        for (const detail of details) {
+          await this.detailService.delete(detail.id);
+        }
+        return { id: receiptId };
+      })
+      .catch((e) => {
+        console.log(e);
+        throw new ApiError(`Error deleting receipt with code ${receiptId} `);
       });
   }
 }

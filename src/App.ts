@@ -3,9 +3,11 @@ import express from "express";
 import "dotenv/config";
 import { ApiError } from "./error-handling/ApiError";
 import cors from "cors";
-import { BAD_REQUEST, FORBIDDEN, INTERNAL_SERVER } from "./types/error.type";
+import { FORBIDDEN, INTERNAL_SERVER } from "./types/error.type";
 import logger from "./logger/api.logger";
 import ProductRouter from "./routers/product.router";
+import ReceiptRouter from "./routers/receipt.router";
+import UserRouter from "./routers/user.routes";
 
 class App {
   public express: express.Application;
@@ -14,10 +16,6 @@ class App {
     "http://127.0.0.1:5173",
     "http://localhost:5173",
     "http://localhost:5000",
-    "https://bouncer-frontend.vercel.app",
-    "https://dli-hall-pass.vercel.app",
-    "https://hallpass.degenape.academy",
-    "http://127.0.0.1:4173",
     "*",
   ];
 
@@ -52,6 +50,8 @@ class App {
   private routes(): void {
     // Custom Routes
     this.express.use("/api/product", ProductRouter);
+    this.express.use("/api/receipt", ReceiptRouter);
+    this.express.use("/api/user", UserRouter);
 
     // swagger docs
 

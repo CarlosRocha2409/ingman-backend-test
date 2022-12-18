@@ -5,6 +5,7 @@ export class UserDTO {
   name: string;
   lastname: string;
   fullName: string;
+  email: string;
   active: number;
   created_at: Date;
 
@@ -15,5 +16,6 @@ export class UserDTO {
     this.active = user.active;
     this.fullName = `${user.name} ${user.lastname}`;
     this.created_at = user.created_at;
+    this.email = user.email;
   }
 }

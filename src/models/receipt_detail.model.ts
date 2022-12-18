@@ -33,7 +33,7 @@ export class ReceiptDetail {
   })
   productId!: number;
 
-  @OneToOne(() => Product)
+  @ManyToOne(() => Product)
   @JoinColumn({
     name: "productId",
   })
@@ -41,6 +41,7 @@ export class ReceiptDetail {
 
   @Column({
     default: 0.15,
+    type: "float",
   })
   tax!: number;
 

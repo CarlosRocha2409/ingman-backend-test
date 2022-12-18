@@ -3,6 +3,9 @@ import fs from "fs";
 // import { User } from "../models/user.model";
 import apiLogger from "../logger/api.logger";
 import { Product } from "../models/product.model";
+import { User } from "../models/user.model";
+import { Receipt } from "../models/receipt.model";
+import { ReceiptDetail } from "../models/receipt_detail.model";
 // import { Wallet } from "../models/wallet.model";
 // import { Discord } from "../models/discord.model";
 // import { Guild } from "../models/guild.model";
@@ -29,7 +32,7 @@ class DBConfig {
       password: this.password,
       database: this.database,
       synchronize: true,
-      entities: [Product],
+      entities: [Product, User, Receipt, ReceiptDetail],
     });
     this.connect();
   }

@@ -1,6 +1,7 @@
 import { Product } from "../models/product.model";
 
 export class ProductDTO {
+  id: number;
   code: string;
   description: string;
   price: number;
@@ -9,6 +10,7 @@ export class ProductDTO {
   created_at: Date;
 
   constructor(product: Product) {
+    this.id = product.id;
     this.code = product.code;
     this.description = product.description;
     this.price = product.price;
