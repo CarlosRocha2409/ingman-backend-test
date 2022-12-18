@@ -32,3 +32,7 @@ $ yarn dev
 ```bash
 $ yarn start
 ```
+
+## Diagram
+
+![Diagram](./src/assets/dbdiagram.png)
